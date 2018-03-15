@@ -126,3 +126,19 @@ def plot_bins(binning, size=6):
     alt_signs = xr.DataArray(alt_sign_array(*binning.shape[:2]), dims=('theta', 'r'))
     all_bins = (binning * alt_signs).sum(('theta', 'r'))
     all_bins.plot.imshow(size=size, aspect=get_aspect(all_bins), add_colorbar=0)
+    
+    
+def circ_aperture(image_shape=(256 + 1, 256 + 1), origin=Point(128, 128), radius=25.):
+    ''' Binary circular aperture '''
+    nx, ny = image_shape
+    radius_map = cart_to_polar_map(np.arange(nx), np.arange(ny), origin).r
+    return radius_map <= radius
+
+
+def radial_intensity_MSD(origin, image, theta_bins, r_bins):
+    ''' Mean squared deviation of radial intensity profiles at different theta from the average profile (over 2pi) '''
+    coord_map = cart_to_polar_map(image.x, image.y, Point(*origin))
+    binning = make_bins(coord_map, theta=theta_bins, r=r_bins)
+    polar = transform_to_polar(image, binning)
+    residuals = (polar.y - polar.y.mean('theta'))**2
+    return float(residuals.mean(('theta', 'r')))
