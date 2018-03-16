@@ -120,8 +120,8 @@ def plot_bins(binning, size=6):
         size of the figure.
     '''
     def alt_sign_array(ny, nx):
-        row = np.stack((-1)**i for i in range(nx))
-        return np.vstack((-1)**i * row for i in range(ny))
+        row = np.asarray([(-1)**i for i in range(nx)])
+        return np.asarray([(-1)**i * row for i in range(ny)])
     
     alt_signs = xr.DataArray(alt_sign_array(*binning.shape[:2]), dims=('theta', 'r'))
     all_bins = (binning * alt_signs).sum(('theta', 'r'))
