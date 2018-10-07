@@ -49,7 +49,7 @@ def cart_to_polar_map(x, y, origin):
                       coords={'y': y, 'x': x}, attrs={'origin': origin})
 
 
-def make_bins(crd_map, *, theta=np.linspace(-np.pi, np.pi, 2), r=np.arange(0, 3., .5)): 
+def make_bins(crd_map, *, theta=[[-np.pi, np.pi]], r=[[0, 1.5]]): 
     ''' 2D binning of pixels in an image based on their polar (theta, r) coordinates.
     Returned object provides easy and direct visualisation of each bin on ('x', 'y') scale.
     
@@ -70,14 +70,19 @@ def make_bins(crd_map, *, theta=np.linspace(-np.pi, np.pi, 2), r=np.arange(0, 3.
         Dataset.n contains the number of pixels in each bin.
         
     '''
+#    bin_masks = np.stack(
+#        reduce(np.logical_and, (crd_map.r < r2, crd_map.r >= r1, crd_map.theta <= th2, crd_map.theta > th1))
+#        for (th1, th2), (r1, r2) in product(zip(theta, theta[1:]), zip(r, r[1:]))
+#                        )
     bin_masks = np.stack(
         reduce(np.logical_and, (crd_map.r < r2, crd_map.r >= r1, crd_map.theta <= th2, crd_map.theta > th1))
-        for (th1, th2), (r1, r2) in product(zip(theta, theta[1:]), zip(r, r[1:]))
+        for (th1, th2), (r1, r2) in product(theta, r)
                         )
-    coords = (bin_centers(theta), bin_centers(r), crd_map.y, crd_map.x)
+#    coords = (bin_centers(theta), bin_centers(r), crd_map.y, crd_map.x)
+    coords = (np.mean(theta, axis=1), np.mean(r, axis=1), crd_map.y, crd_map.x)
     binning = xr.DataArray(bin_masks.reshape([len(i) for i in coords]), 
                              coords=coords, dims=('theta', 'r', 'y', 'x'), name='binning')
-    binning.coords['n'] = (('theta', 'r'), np.sum(bin_masks, axis=(1,2)).reshape(len(theta)-1, len(r)-1))
+    binning.coords['n'] = (('theta', 'r'), np.sum(bin_masks, axis=(1,2)).reshape(len(theta), len(r)))
     return binning
 
 
